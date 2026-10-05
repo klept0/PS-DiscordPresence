@@ -35,5 +35,6 @@ enum presence_action presence_reduce(const struct presence_snapshot *previous,
                                      struct presence_snapshot *next);
 const char *presence_action_name(enum presence_action action);
 const char *presence_class_name(uint32_t classification);
+size_t presence_json_escape(const char *in, char *out, size_t out_size);
 
 #endif
