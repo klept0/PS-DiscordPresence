@@ -82,6 +82,16 @@ def activity(status: dict) -> dict | None:
         result["large_image"] = store["image"]
     return result
 
+OFFLINE_POLL_SECONDS = 15
+
+def offline_reason(error: Exception) -> str:
+    reason = getattr(error, "reason", error)  # URLError wraps the socket error
+    if isinstance(reason, ConnectionRefusedError):
+        return "PS5 refused the connection: the payload is not running (rest mode stops it; resend PS-DiscordPresence.elf after waking)"
+    if isinstance(reason, OSError):
+        return "PS5 is offline or in rest mode"
+    return f"PS5 sent an unreadable status ({error})"
+
 KEEP = object()  # status that should leave the current presence untouched
 
 def next_activity(status: dict) -> dict | None | object:
@@ -103,14 +113,19 @@ def main() -> None:
     except DiscordNotFound:
         print("Bridge startup error: Discord desktop is not installed or running on this machine.")
         return
-    last = None; title = None; started = 0
+    last = None; title = None; started = 0; offline = False
     print(f"Bridge connected. Polling PS5 at {c.ps5_host}:{c.ps5_port}")
     while True:
         try:
             try:
                 current = next_activity(fetch_status(c))
+                if offline:
+                    print("PS5 is back online")
+                    offline = False
             except (OSError, ValueError) as error:
-                print("PS5 unreachable:", error)
+                if not offline:
+                    print(f"{offline_reason(error)}. Waiting for it to come back...")
+                    offline = True
                 current = None
             if current is not KEEP:
                 marker = json.dumps(current, sort_keys=True)
@@ -123,7 +138,7 @@ def main() -> None:
                         rpc.update(**current, start=started); print("Discord presence updated:", current["details"])
                     last = marker
         except Exception as error:
-            print("Bridge status:", error)
+            print("Discord connection lost, reconnecting:", error)
             last = None  # force a resend once Discord is back
             try:
                 rpc.close()
@@ -133,6 +148,6 @@ def main() -> None:
                 rpc.connect()
             except Exception:
                 pass
-        time.sleep(max(3, c.poll_seconds))
+        time.sleep(OFFLINE_POLL_SECONDS if offline else max(3, c.poll_seconds))
 
 if __name__ == "__main__": main()

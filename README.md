@@ -40,7 +40,7 @@ Host-side tests for the portable C sources and the bridge:
 ```text
 cd tests
 clang -I../src ../src/config.c ../src/reducer.c ../src/metadata.c test_c.c -o run_tests && ./run_tests
-python3 test_bridge.py
+python3 test_bridge.py && python3 test_offline.py
 ```
 
 ## Release
