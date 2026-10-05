@@ -8,6 +8,7 @@ a = bridge.activity({"state": "active_running", "titleName": "Astro Bot", "firmw
 assert a["state"] == "Playing on PlayStation 5 FW 9.60", a
 assert bridge.activity({"state": "active_running", "titleName": "X", "firmware": ""})["state"] == "Playing on PlayStation 5"
 assert bridge.next_activity({"state": "probe_timeout"}) is bridge.KEEP
+assert bridge.next_activity({"state": "loaded_unknown"}) is bridge.KEEP
 assert bridge.activity({"state": "not_loaded"}) is None
 # negative cache: bad content id fetch happens once
 calls = []
@@ -22,6 +23,7 @@ assert len(calls) == 1, calls
 # end-to-end loop against fake PS5 + fake Discord
 seq = [{"state": "active_running", "titleName": "Game A", "firmware": "9.60"},
        {"state": "probe_timeout"},
+       {"state": "loaded_unknown", "titleid": "CUSA01127"},
        {"state": "active_running", "titleName": "Game A", "firmware": "9.60"},
        {"state": "active_running", "titleName": 'Game "B"', "firmware": "9.60"},
        "DOWN",
@@ -48,7 +50,7 @@ ticks = iter(range(100, 10000, 10)); bridge.time.time = lambda: next(ticks)
 n = [0]
 def fake_sleep(s):
     n[0] += 1
-    if n[0] >= 7: raise KeyboardInterrupt
+    if n[0] >= 8: raise KeyboardInterrupt
 bridge.time.sleep = fake_sleep
 try: bridge.main()
 except KeyboardInterrupt: pass

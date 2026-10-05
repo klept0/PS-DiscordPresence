@@ -123,6 +123,7 @@ static void client(int fd) {
             snprintf(output, sizeof(output), "{\"state\":\"probe_timeout\",\"probe_rc\":%d,\"firmware\":\"%s\",\"reason\":\"game-state probe exceeded 3 seconds; retry after ShellUI settles\"}\n", query_rc, firmware_text);
             reply(fd, 200, "application/json", output); return;
         }
+        presence_stabilize(&last, &state);
         presence_reduce(&last, &state, &last);
         presence_metadata_resolve(state.titleid, &meta);
         presence_json_escape(meta.title_name, title, sizeof(title));

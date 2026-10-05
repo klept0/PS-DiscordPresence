@@ -22,6 +22,7 @@ struct presence_config {
 struct presence_snapshot {
     uint32_t classification;
     uint32_t confidence;
+    uint32_t pid;
     char titleid[16];
     char contentid[64];
     char reason[160];
@@ -30,6 +31,7 @@ struct presence_snapshot {
 void presence_config_defaults(struct presence_config *out);
 int presence_config_parse(const char *json, size_t len, struct presence_config *out);
 int presence_config_serialize(const struct presence_config *cfg, char *out, size_t out_size);
+void presence_stabilize(const struct presence_snapshot *previous, struct fg_state_response *current);
 enum presence_action presence_reduce(const struct presence_snapshot *previous,
                                      const struct fg_state_response *current,
                                      struct presence_snapshot *next);

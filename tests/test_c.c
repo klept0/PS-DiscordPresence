@@ -20,6 +20,15 @@ int main(void){
   assert(presence_reduce(&a,&r,&b)==PRESENCE_SET_ACTIVE);
   assert(presence_reduce(&b,&r,&a)==PRESENCE_NO_CHANGE);
   r.classification=FG_STATE_CLASS_SUSPENDED_OR_HOME; assert(presence_reduce(&a,&r,&b)==PRESENCE_CLEAR);
+  /* stabilize: same pid with no decisive log event keeps the last state */
+  memset(&r,0,sizeof r); r.pid=42; strcpy(r.titleid,"CUSA01127"); r.classification=FG_STATE_CLASS_ACTIVE_RUNNING;
+  presence_reduce(NULL,&r,&a);
+  r.classification=FG_STATE_CLASS_LOADED_UNKNOWN; presence_stabilize(&a,&r);
+  assert(r.classification==FG_STATE_CLASS_ACTIVE_RUNNING);
+  r.pid=43; r.classification=FG_STATE_CLASS_LOADED_UNKNOWN; presence_stabilize(&a,&r);
+  assert(r.classification==FG_STATE_CLASS_LOADED_UNKNOWN);   /* different process: no carry-over */
+  r.pid=42; r.classification=FG_STATE_CLASS_NOT_LOADED; presence_stabilize(&a,&r);
+  assert(r.classification==FG_STATE_CLASS_NOT_LOADED);       /* decisive states always win */
   mkdir("t",0700);mkdir("t/user",0700);mkdir("t/user/appmeta",0700);mkdir("t/user/appmeta/PPSA01234",0700);
   FILE*f=fopen("t/user/appmeta/PPSA01234/param.json","w");fputs("{\"localizedParameters\":{\"en-US\":{\"titleName\":\"Ratchet \\\"&\\\" Clank\"}}}",f);fclose(f);
   struct presence_metadata m; assert(presence_metadata_resolve_at("t","PPSA01234",&m));

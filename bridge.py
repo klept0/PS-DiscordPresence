@@ -85,7 +85,9 @@ def activity(status: dict) -> dict | None:
 KEEP = object()  # status that should leave the current presence untouched
 
 def next_activity(status: dict) -> dict | None | object:
-    if status.get("state") == "probe_timeout":
+    # Undecided states (probe too slow, or a title loaded with no recent focus event)
+    # must not clear a presence that is still valid.
+    if status.get("state") in {"probe_timeout", "loaded_unknown", "unknown"}:
         return KEEP
     return activity(status)
 
